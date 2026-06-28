@@ -13,7 +13,7 @@ saldo_cliente_200_sol = 10
 opcion = "SI"
 
 vuelto = 0
-
+cliente_productos = []
 productos = {
     1: {"nombre": "Agua Cielo", "precio": 2, "img": "img/productos/agua_cielo.png"},
     2: {"nombre": "Coca cola", "precio": 3, "img": "img/productos/coca_cola.png"},

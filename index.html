@@ -328,6 +328,22 @@
       letter-spacing: 0.08em;
     }
 
+    .bandeja-entrega-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    #recoger-entrega {
+      min-width: 132px;
+      padding: 8px 14px;
+      margin-left: 8px;
+      white-space: nowrap;
+      font-size: 0.95rem;
+    }
+
     .ranuras-grid {
       display: grid;
       gap: 12px;
@@ -815,7 +831,10 @@
         </section>
 
         <section class="bandeja-wrap">
-          <h2>BANDEJA DE ENTREGA</h2>
+          <div class="bandeja-entrega-header">
+            <h2>BANDEJA DE ENTREGA</h2>
+            <button class="btn-mini" id="recoger-entrega" type="button">Recoger cambio</button>
+          </div>
           <div class="entregas">
             <div class="bandeja salida-monedas">
               <div class="bandeja-titulo">SALIDA DE MONEDAS</div>
@@ -824,6 +843,10 @@
             <div class="bandeja salida-billetes">
               <div class="bandeja-titulo">SALIDA DE BILLETES</div>
               <div id="salida-billetes" class="bandeja-vacia">Sin billetes</div>
+            </div>
+            <div class="bandeja salida-productos">
+              <div class="bandeja-titulo">SALIDA DE PRODUCTOS</div>
+              <div id="salida-productos" class="bandeja-vacia">Esperando compra</div>
             </div>
           </div>
         </section>
