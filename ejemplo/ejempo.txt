@@ -1,0 +1,34 @@
+
+Yo también lo escribiría diferente
+
+Por ejemplo:
+
+def do_POST(self):       (mira algo asi masomenos la ide de como aser para api.py)
+
+    if self.path == "/sumar":
+        self.api_sumar()
+        return
+
+    self.send_error(404)
+
+Y luego:
+
+def api_sumar(self):          (mira algo asi masomenos la ide de como aser para funciones.py)
+
+
+    datos = self.obtener_json()
+
+    resultado = sumar(
+        datos["numero1"],
+        datos["numero2"]
+    )
+
+    self.responder({
+        "resultado": resultado
+    })
+
+¿Ves la diferencia?
+
+Ahora do_POST() ya casi no hace nada.
+
+Solo decide qué función ejecutar.

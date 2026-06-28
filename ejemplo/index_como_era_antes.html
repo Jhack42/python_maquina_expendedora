@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maquina Expendedora</title>
+  <style>
+    :root {
+      --bg-1: #0b1220;
+      --bg-2: #1f2937;
+      --machine-1: #d7dee7;
+      --machine-2: #9ba7b6;
+      --glass: rgba(255, 255, 255, 0.84);
+      --panel: #334155;
+      --panel-2: #1e293b;
+      --screen: #031109;
+      --screen-text: #78ffb0;
+      --orange: #ea580c;
+      --orange-2: #c2410c;
+      --red: #b91c1c;
+      --white: #f8fafc;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --shadow: rgba(15, 23, 42, 0.38);
+      --drop: rgba(120, 255, 176, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 20px;
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(234, 88, 12, 0.2), transparent 24%),
+        linear-gradient(165deg, var(--bg-1), var(--bg-2));
+      color: var(--white);
+    }
+
+    .layout {
+      width: min(1440px, 100%);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1.75fr) minmax(320px, 390px);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .maquina {
+      min-height: 760px;
+      background: linear-gradient(180deg, var(--machine-1), var(--machine-2));
+      border-radius: 34px;
+      padding: 22px;
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(290px, 340px);
+      grid-template-areas:
+        "vitrina panel"
+        "salida panel";
+      gap: 20px;
+      box-shadow: 0 28px 70px var(--shadow);
+      border: 8px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .vitrina {
+      grid-area: vitrina;
+      position: relative;
+      overflow: hidden;
+      border-radius: 28px;
+      padding: 22px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(226, 232, 240, 0.96));
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.4);
+    }
+
+    .vitrina.animando-caida {
+      overflow: visible;
+    }
+
+    .vitrina::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(108deg, transparent 0%, rgba(255, 255, 255, 0.42) 20%, transparent 34%);
+      transform: translateX(-110%);
+      animation: brillo 6s linear infinite;
+      pointer-events: none;
+    }
+
+    h1, h2, h3, p {
+      margin-top: 0;
+    }
+
+    .titulo {
+      color: var(--ink);
+      margin-bottom: 8px;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+    }
+
+    .subtitulo {
+      color: #334155;
+      margin-bottom: 20px;
+    }
+
+    .productos {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .producto {
+      position: relative;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.94));
+      border: 2px solid rgba(148, 163, 184, 0.42);
+      border-radius: 22px;
+      padding: 14px 14px 18px;
+      display: grid;
+      gap: 10px;
+      min-height: 280px;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .producto:hover,
+    .producto.activo {
+      transform: translateY(-4px);
+      border-color: var(--orange);
+      box-shadow: 0 18px 34px rgba(15, 23, 42, 0.14);
+    }
+
+    .codigo {
+      position: relative;
+      z-index: 3;
+      width: fit-content;
+      border-radius: 999px;
+      background: var(--ink);
+      color: #fff;
+      padding: 6px 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .producto-stack {
+      position: relative;
+      width: 100%;
+      height: 152px;
+      margin-top: 4px;
+      z-index: 2;
+    }
+
+    .producto-imagen {
+      position: absolute;
+      left: 50%;
+      bottom: 18px;
+      width: 104px;
+      height: 104px;
+      object-fit: contain;
+      transform-origin: center bottom;
+      filter: drop-shadow(0 10px 16px rgba(15, 23, 42, 0.16));
+    }
+
+    .producto-imagen.prod-stack-0 {
+      transform: translateX(-50%) translateY(0) scale(1);
+      z-index: 8;
+    }
+
+    .producto-imagen.prod-stack-1 {
+      transform: translateX(-50%) translateY(-8px) scale(0.97);
+      z-index: 7;
+    }
+
+    .producto-imagen.prod-stack-2 {
+      transform: translateX(-50%) translateY(-16px) scale(0.94);
+      z-index: 6;
+    }
+
+    .producto-imagen.prod-stack-3 {
+      transform: translateX(-50%) translateY(-24px) scale(0.91);
+      z-index: 5;
+    }
+
+    .producto-imagen.prod-stack-4 {
+      transform: translateX(-50%) translateY(-32px) scale(0.88);
+      z-index: 4;
+    }
+
+    .producto-imagen.prod-stack-5 {
+      transform: translateX(-50%) translateY(-40px) scale(0.85);
+      z-index: 3;
+    }
+
+    .producto-imagen.prod-stack-6 {
+      transform: translateX(-50%) translateY(-48px) scale(0.82);
+      z-index: 2;
+    }
+
+    .producto-imagen.prod-stack-7 {
+      transform: translateX(-50%) translateY(-56px) scale(0.79);
+      z-index: 1;
+    }
+
+
+    .nombre {
+      position: relative;
+      z-index: 3;
+      color: var(--ink);
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+
+    .detalle {
+      position: relative;
+      z-index: 3;
+      color: #475569;
+      font-size: 0.94rem;
+    }
+
+    .pie-producto {
+      position: relative;
+      z-index: 3;
+      margin-top: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      color: var(--ink);
+    }
+
+    .precio {
+      color: #0369a1;
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+
+    .stock {
+      color: #166534;
+      font-weight: 700;
+      font-size: 0.92rem;
+    }
+
+    .stock-chip {
+      position: absolute;
+      right: 6px;
+      top: 6px;
+      min-width: 32px;
+      height: 32px;
+      padding: 0 10px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, #0f172a, #334155);
+      color: #fff;
+      font-size: 0.82rem;
+      font-weight: 800;
+      box-shadow: 0 6px 12px rgba(15, 23, 42, 0.18);
+    }
+
+    .panel {
+      grid-area: panel;
+      border-radius: 28px;
+      background: linear-gradient(180deg, #475569, var(--panel));
+      padding: 18px;
+      display: grid;
+      grid-template-rows: auto auto auto auto auto 1fr auto;
+      gap: 14px;
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.08);
+    }
+
+    .pantalla {
+      background: linear-gradient(180deg, #06140b, var(--screen));
+      border-radius: 18px;
+      padding: 16px;
+      min-height: 128px;
+      border: 2px solid rgba(120, 255, 176, 0.16);
+      box-shadow: inset 0 0 24px rgba(120, 255, 176, 0.12);
+    }
+
+    .pantalla-label {
+      color: rgba(120, 255, 176, 0.7);
+      font-size: 0.78rem;
+      letter-spacing: 0.15em;
+      margin-bottom: 10px;
+    }
+
+    .mensaje,
+    .saldo,
+    .saldo-personal-resumen {
+      color: var(--screen-text);
+      font-family: "Courier New", monospace;
+    }
+
+    .mensaje {
+      min-height: 42px;
+      font-size: 1.02rem;
+    }
+
+    .saldo,
+    .saldo-personal-resumen {
+      font-size: 1.45rem;
+      font-weight: 800;
+      margin-top: 8px;
+    }
+
+    .seleccion {
+      background: rgba(15, 23, 42, 0.28);
+      border-radius: 16px;
+      padding: 14px;
+      color: var(--white);
+    }
+
+    .seleccion strong {
+      display: block;
+      font-size: 1.35rem;
+      margin-top: 8px;
+      letter-spacing: 0.12em;
+    }
+
+    .ranuras h2,
+    .teclado-wrap h2,
+    .bandeja-wrap h2,
+    .bolsillo h2 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+    }
+
+    .ranuras-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .ranura {
+      position: relative;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #0f172a, #1e293b);
+      border: 2px dashed rgba(255, 255, 255, 0.12);
+      padding: 14px;
+      transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .ranura.activa {
+      border-color: #78ffb0;
+      box-shadow: 0 0 0 4px var(--drop);
+      transform: scale(1.01);
+    }
+
+    .ranura-moneda {
+      min-height: 108px;
+    }
+
+    .hueco-moneda {
+      width: 22px;
+      height: 64px;
+      border-radius: 999px;
+      background: #020617;
+      margin: 12px auto 6px;
+      box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.8);
+    }
+
+    .ranura-billete {
+      min-height: 108px;
+    }
+
+    .hueco-billete {
+      width: 100%;
+      max-width: 180px;
+      height: 18px;
+      border-radius: 999px;
+      background: #020617;
+      margin: 18px auto 8px;
+      box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.8);
+    }
+
+    .ranura p {
+      margin: 0;
+      text-align: center;
+      color: #cbd5e1;
+      font-size: 0.92rem;
+    }
+
+    .teclado {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    button {
+      border: 0;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .tecla {
+      border-radius: 14px;
+      padding: 15px 0;
+      background: linear-gradient(180deg, #1e293b, #0f172a);
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    .tecla:hover {
+      background: linear-gradient(180deg, #334155, #172033);
+    }
+
+    .tecla-accion {
+      background: linear-gradient(180deg, var(--orange), var(--orange-2));
+    }
+
+    .tecla-peligro {
+      background: linear-gradient(180deg, #ef4444, var(--red));
+    }
+
+    .entregas {
+      display: grid;
+      gap: 10px;
+    }
+
+    .salida-productos-wrap {
+      grid-area: salida;
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.18), rgba(15, 23, 42, 0.08));
+      padding: 14px 16px 16px;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+    }
+
+    .producto-cayendo {
+      position: fixed;
+      width: 84px;
+      height: 84px;
+      object-fit: contain;
+      pointer-events: none;
+      z-index: 9999;
+      filter: drop-shadow(0 16px 18px rgba(15, 23, 42, 0.24));
+    }
+
+    .bandeja {
+      min-height: 92px;
+      background: linear-gradient(180deg, #0b1120, #030712);
+      border-radius: 20px;
+      padding: 14px;
+      color: #cbd5e1;
+      box-shadow: inset 0 10px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    .bandeja strong {
+      display: block;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .bandeja-titulo {
+      font-size: 0.88rem;
+      letter-spacing: 0.08em;
+      color: #e2e8f0;
+      margin-bottom: 8px;
+    }
+
+    .bandeja-vacia {
+      min-height: 40px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 0.92rem;
+    }
+
+    .salida-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: end;
+    }
+
+    .salida-monedas .salida-item-img {
+      width: 36px;
+      height: 36px;
+    }
+
+    .salida-billetes .salida-item-img {
+      width: 72px;
+      height: 40px;
+      border-radius: 6px;
+    }
+
+    .salida-productos .salida-item-img {
+      width: 54px;
+      height: 54px;
+    }
+
+    .salida-item {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 6px;
+    }
+
+    .salida-item-img {
+      object-fit: contain;
+      filter: drop-shadow(0 4px 8px rgba(15, 23, 42, 0.22));
+    }
+
+    .salida-cantidad {
+      position: absolute;
+      right: -4px;
+      bottom: -4px;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, #f97316, #c2410c);
+      color: #fff;
+      font-size: 0.74rem;
+      font-weight: 800;
+    }
+
+    .bolsillo {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 28px;
+      padding: 14px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .bolsillo p {
+      color: #cbd5e1;
+    }
+
+    .bolsillo h2 {
+      margin-bottom: 8px;
+    }
+
+    .saldo-personal {
+      background: linear-gradient(180deg, #052e16, #03190d);
+      border: 1px solid rgba(120, 255, 176, 0.16);
+      border-radius: 18px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+    }
+
+    .bolsillo-columnas {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .grupo-bolsillo {
+      display: grid;
+      gap: 8px;
+    }
+
+    .grupo-bolsillo-titulo {
+      font-size: 0.9rem;
+      letter-spacing: 0.08em;
+      color: #e2e8f0;
+    }
+
+    .items-bolsillo {
+      display: grid;
+      gap: 8px;
+    }
+
+    .item-bolsillo {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      padding: 8px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 6px;
+      align-items: center;
+      min-height: 94px;
+    }
+
+    .dinero-stack {
+      position: relative;
+      width: 92px;
+      height: 64px;
+      margin: 0 auto;
+    }
+
+    .item-imagen {
+      position: absolute;
+      left: 0;
+      top: 3px;
+      width: 62px;
+      height: 62px;
+      object-fit: contain;
+      cursor: grab;
+      user-select: none;
+      filter: drop-shadow(0 6px 10px rgba(15, 23, 42, 0.24));
+      transition: transform 0.18s ease;
+    }
+
+    .item-imagen:active {
+      cursor: grabbing;
+    }
+
+    .item-imagen:hover {
+      transform: translateY(-2px);
+    }
+
+    .item-imagen.stack-0 {
+      transform: translateX(0);
+      z-index: 1;
+    }
+
+    .item-imagen.stack-1 {
+      transform: translateX(10px);
+      z-index: 2;
+    }
+
+    .item-imagen.stack-2 {
+      transform: translateX(20px);
+      z-index: 3;
+    }
+
+    .item-imagen.stack-3 {
+      transform: translateX(30px);
+      z-index: 4;
+    }
+
+    .item-info strong,
+    .item-info span {
+      display: block;
+    }
+
+    .item-info {
+      grid-column: 1 / -1;
+      text-align: center;
+      margin-top: -2px;
+    }
+
+    .item-info strong {
+      font-size: 0.88rem;
+      font-weight: 800;
+    }
+
+    .item-info span {
+      color: #cbd5e1;
+      margin-top: 1px;
+      font-size: 0.84rem;
+    }
+
+    .controles {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      justify-items: center;
+    }
+
+    .contador {
+      min-width: 30px;
+      text-align: center;
+      font-weight: 800;
+      font-size: 0.92rem;
+    }
+
+    .btn-mini {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      font-weight: 800;
+      color: #fff;
+      font-size: 0.82rem;
+    }
+
+    .btn-mini {
+      background: linear-gradient(180deg, #334155, #1e293b);
+    }
+
+    .btn-mini:hover {
+      filter: brightness(1.08);
+    }
+
+    .tip {
+      margin-top: 8px;
+      color: #94a3b8;
+      font-size: 0.88rem;
+    }
+
+    .cantidad-chip {
+      position: absolute;
+      right: -4px;
+      bottom: -4px;
+      min-width: 28px;
+      height: 28px;
+      padding: 0 8px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, #f97316, #c2410c);
+      color: #fff;
+      font-size: 0.82rem;
+      font-weight: 800;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.28);
+      z-index: 5;
+    }
+
+    @keyframes brillo {
+      from { transform: translateX(-110%); }
+      to { transform: translateX(130%); }
+    }
+
+    @media (max-width: 1200px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .maquina {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "vitrina"
+          "salida"
+          "panel";
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 12px;
+      }
+
+      .productos {
+        grid-template-columns: 1fr;
+      }
+
+      .bolsillo-columnas {
+        grid-template-columns: 1fr;
+      }
+
+      .item-bolsillo {
+        grid-template-columns: 1fr auto;
+      }
+
+      .controles {
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <main class="maquina">
+      <section class="vitrina">
+        <h1 class="titulo">Maquina Expendedora</h1>
+        <p class="subtitulo">Los productos estan detras del vidrio. Escribe un codigo de dos digitos, inserta tu dinero y compra.</p>
+        <div class="productos" id="productos"></div>
+      </section>
+
+      <section class="salida-productos-wrap">
+        <h2>SALIDA DE PRODUCTOS</h2>
+        <div class="bandeja salida-productos">
+          <div id="salida-productos" class="bandeja-vacia">Esperando compra</div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <section class="pantalla">
+          <div class="pantalla-label">PANTALLA</div>
+          <div class="mensaje" id="mensaje">Bienvenido. Arrastra una moneda o billete desde tu bolsillo.</div>
+          <div class="saldo" id="saldo-maquina">Saldo maquina: S/ 0.00</div>
+        </section>
+
+        <section class="seleccion">
+          Codigo seleccionado
+          <strong id="codigo-actual">--</strong>
+        </section>
+
+        <section class="ranuras">
+          <h2>ENTRADA DE DINERO</h2>
+          <div class="ranuras-grid">
+            <div class="ranura ranura-moneda" id="slot-moneda" data-tipo="moneda">
+              <div class="hueco-moneda"></div>
+              <p>Arrastra aqui las monedas</p>
+            </div>
+            <div class="ranura ranura-billete" id="slot-billete" data-tipo="billete">
+              <div class="hueco-billete"></div>
+              <p>Arrastra aqui los billetes</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="teclado-wrap">
+          <h2>TECLADO NUMERICO</h2>
+          <div class="teclado">
+            <button class="tecla" data-tecla="1">1</button>
+            <button class="tecla" data-tecla="2">2</button>
+            <button class="tecla" data-tecla="3">3</button>
+            <button class="tecla" data-tecla="4">4</button>
+            <button class="tecla" data-tecla="5">5</button>
+            <button class="tecla" data-tecla="6">6</button>
+            <button class="tecla" data-tecla="7">7</button>
+            <button class="tecla" data-tecla="8">8</button>
+            <button class="tecla" data-tecla="9">9</button>
+            <button class="tecla tecla-peligro" id="borrar">Borrar</button>
+            <button class="tecla" data-tecla="0">0</button>
+            <button class="tecla tecla-accion" id="comprar">Comprar</button>
+          </div>
+        </section>
+
+        <section class="bandeja-wrap">
+          <h2>BANDEJA DE ENTREGA</h2>
+          <div class="entregas">
+            <div class="bandeja salida-monedas">
+              <div class="bandeja-titulo">SALIDA DE MONEDAS</div>
+              <div id="salida-monedas" class="bandeja-vacia">Sin monedas</div>
+            </div>
+            <div class="bandeja salida-billetes">
+              <div class="bandeja-titulo">SALIDA DE BILLETES</div>
+              <div id="salida-billetes" class="bandeja-vacia">Sin billetes</div>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    <aside class="bolsillo">
+      <h2>Tu Bolsillo</h2>
+
+      <section class="saldo-personal">
+        <div class="pantalla-label">SALDO PERSONAL</div>
+        <div class="saldo-personal-resumen" id="saldo-personal">S/ 0.00</div>
+      </section>
+
+      <div class="bolsillo-columnas">
+        <section class="grupo-bolsillo">
+          <div class="grupo-bolsillo-titulo">MONEDAS</div>
+          <div class="items-bolsillo" id="items-monedas"></div>
+        </section>
+        <section class="grupo-bolsillo">
+          <div class="grupo-bolsillo-titulo">BILLETES</div>
+          <div class="items-bolsillo" id="items-billetes"></div>
+        </section>
+      </div>
+      <p class="tip">La maquina acepta monedas por la ranura vertical y billetes por la ranura horizontal.</p>
+    </aside>
+  </div>
+
+  <script>
+    const inventarioBase = [
+      { codigo: "01", nombre: "Agua Cielo", precio: 2.00, stock: 8, imagen: "img/productos/agua_cielo.png", detalle: "Agua fresca de botella" },
+      { codigo: "02", nombre: "Chocolate Sublime", precio: 2.50, stock: 6, imagen: "img/productos/chocolate_sublime.png", detalle: "Chocolate clasico peruano" },
+      { codigo: "03", nombre: "Coca Cola", precio: 4.50, stock: 5, imagen: "img/productos/coca_cola.png", detalle: "Gaseosa helada" },
+      { codigo: "04", nombre: "Cuates", precio: 3.50, stock: 7, imagen: "img/productos/cuates.png", detalle: "Snack crocante" },
+      { codigo: "05", nombre: "Galleta Soda", precio: 2.20, stock: 6, imagen: "img/productos/galleta_soda.png", detalle: "Galleta salada" },
+      { codigo: "06", nombre: "Inca Cola", precio: 4.50, stock: 5, imagen: "img/productos/inca_cola.png", detalle: "Bebida amarilla clasica" },
+      { codigo: "07", nombre: "Papitas Lays", precio: 4.00, stock: 7, imagen: "img/productos/papitas_lays.png", detalle: "Papas crocantes" }
+    ];
+
+    const dineroBase = [
+      { id: "m10", tipo: "moneda", nombre: "10 centimos", valor: 0.10, imagen: "img/monedas/10_centimos.png" },
+      { id: "m20", tipo: "moneda", nombre: "20 centimos", valor: 0.20, imagen: "img/monedas/20_centimos.png" },
+      { id: "m50", tipo: "moneda", nombre: "50 centimos", valor: 0.50, imagen: "img/monedas/50_centimos.png" },
+      { id: "m1", tipo: "moneda", nombre: "1 sol", valor: 1.00, imagen: "img/monedas/1_sol.png" },
+      { id: "m2", tipo: "moneda", nombre: "2 soles", valor: 2.00, imagen: "img/monedas/2_soles.png" },
+      { id: "m5", tipo: "moneda", nombre: "5 soles", valor: 5.00, imagen: "img/monedas/5_soles.png" },
+      { id: "b10", tipo: "billete", nombre: "10 soles", valor: 10.00, imagen: "img/billetes/10_soles.jpg" },
+      { id: "b20", tipo: "billete", nombre: "20 soles", valor: 20.00, imagen: "img/billetes/20_soles.jpg" },
+      { id: "b50", tipo: "billete", nombre: "50 soles", valor: 50.00, imagen: "img/billetes/50_soles.jpg" },
+      { id: "b100", tipo: "billete", nombre: "100 soles", valor: 100.00, imagen: "img/billetes/100_soles.jpg" },
+      { id: "b200", tipo: "billete", nombre: "200 soles", valor: 200.00, imagen: "img/billetes/200_soles.jpg" }
+    ];
+
+    const productos = inventarioBase.map((item) => ({ ...item }));
+    const bolsillo = dineroBase.map((item) => ({ ...item, cantidad: 10 }));
+
+    const productosEl = document.getElementById("productos");
+    const itemsMonedasEl = document.getElementById("items-monedas");
+    const itemsBilletesEl = document.getElementById("items-billetes");
+    const mensajeEl = document.getElementById("mensaje");
+    const saldoMaquinaEl = document.getElementById("saldo-maquina");
+    const saldoPersonalEl = document.getElementById("saldo-personal");
+    const codigoActualEl = document.getElementById("codigo-actual");
+    const salidaMonedasEl = document.getElementById("salida-monedas");
+    const salidaBilletesEl = document.getElementById("salida-billetes");
+    const salidaProductosEl = document.getElementById("salida-productos");
+    const ranuras = document.querySelectorAll(".ranura");
+
+    let saldoMaquina = 0;
+    let codigoActual = "";
+    let arrastrandoId = null;
+    let ultimaEntrega = {
+      monedas: [],
+      billetes: [],
+      productos: []
+    };
+
+    function dinero(valor) {
+      return `S/ ${valor.toFixed(2)}`;
+    }
+
+    function saldoPersonal() {
+      return bolsillo.reduce((total, item) => total + item.valor * item.cantidad, 0);
+    }
+
+    function actualizarPantalla(mensaje) {
+      mensajeEl.textContent = mensaje;
+      saldoMaquinaEl.textContent = `Saldo maquina: ${dinero(saldoMaquina)}`;
+      saldoPersonalEl.textContent = dinero(saldoPersonal());
+      codigoActualEl.textContent = codigoActual || "--";
+    }
+
+    function renderProductos() {
+      productosEl.innerHTML = "";
+
+      for (const producto of productos) {
+        const card = document.createElement("article");
+        card.className = "producto";
+        if (codigoActual === producto.codigo) {
+          card.classList.add("activo");
+        }
+
+        const visibles = Math.min(Math.max(producto.stock, 1), 8);
+        let stackHtml = "";
+
+        for (let i = 0; i < visibles; i += 1) {
+          stackHtml += `<img class="producto-imagen prod-stack-${i}" src="${producto.imagen}" alt="${producto.nombre}">`;
+        }
+
+        card.innerHTML = `
+          <div class="codigo">${producto.codigo}</div>
+          <div class="producto-stack">
+            ${stackHtml}
+            <div class="stock-chip">x${producto.stock}</div>
+          </div>
+          <div class="nombre">${producto.nombre}</div>
+          <div class="detalle">${producto.detalle}</div>
+          <div class="pie-producto">
+            <span class="precio">${dinero(producto.precio)}</span>
+            <span class="stock">Stock: ${producto.stock}</span>
+          </div>
+        `;
+
+        card.addEventListener("click", () => {
+          codigoActual = producto.codigo;
+          actualizarPantalla(`Producto ${producto.nombre} seleccionado.`);
+          renderProductos();
+        });
+
+        productosEl.appendChild(card);
+      }
+    }
+
+    function cambiarCantidad(id, delta) {
+      const item = bolsillo.find((dato) => dato.id === id);
+      if (!item) return;
+
+      item.cantidad = Math.max(0, item.cantidad + delta);
+      actualizarPantalla(`Tu bolsillo ahora tiene ${item.cantidad} de ${item.nombre}.`);
+      renderBolsillo();
+    }
+
+    function renderBolsillo() {
+      itemsMonedasEl.innerHTML = "";
+      itemsBilletesEl.innerHTML = "";
+
+      for (const item of bolsillo) {
+        const card = document.createElement("article");
+        card.className = "item-bolsillo";
+        const stackClasses = ["stack-0", "stack-1", "stack-2", "stack-3"];
+        const visibles = Math.min(Math.max(item.cantidad, 1), 4);
+        let stackHtml = "";
+
+        for (let i = 0; i < visibles; i += 1) {
+          stackHtml += `<img class="item-imagen ${stackClasses[i]}" src="${item.imagen}" alt="${item.nombre}" data-id="${item.id}" draggable="true">`;
+        }
+
+        card.innerHTML = `
+          <div class="dinero-stack">
+            ${stackHtml}
+            <div class="cantidad-chip">x${item.cantidad}</div>
+          </div>
+          <div class="item-info">
+            <strong>${dinero(item.valor)}</strong>
+          </div>
+          <div class="controles">
+            <button class="btn-mini" data-accion="menos" data-id="${item.id}">-</button>
+            <div class="contador">${item.cantidad}</div>
+            <button class="btn-mini" data-accion="mas" data-id="${item.id}">+</button>
+          </div>
+        `;
+
+        if (item.tipo === "moneda") {
+          itemsMonedasEl.appendChild(card);
+        } else {
+          itemsBilletesEl.appendChild(card);
+        }
+      }
+
+      document.querySelectorAll("[data-accion]").forEach((boton) => {
+        boton.addEventListener("click", () => {
+          const delta = boton.dataset.accion === "mas" ? 1 : -1;
+          cambiarCantidad(boton.dataset.id, delta);
+        });
+      });
+
+      document.querySelectorAll(".item-imagen").forEach((imagen) => {
+        imagen.addEventListener("dragstart", (event) => {
+          const item = bolsillo.find((dato) => dato.id === imagen.dataset.id);
+          if (!item || item.cantidad <= 0) {
+            event.preventDefault();
+            actualizarPantalla(`No tienes ${item ? item.nombre : "ese dinero"} en tu bolsillo.`);
+            return;
+          }
+
+          arrastrandoId = item.id;
+          event.dataTransfer.setData("text/plain", item.id);
+          event.dataTransfer.effectAllowed = "move";
+          if (event.dataTransfer.setDragImage) {
+            event.dataTransfer.setDragImage(imagen, imagen.clientWidth / 2, imagen.clientHeight / 2);
+          }
+          actualizarPantalla(`Arrastrando ${item.nombre} hacia la maquina.`);
+        });
+
+        imagen.addEventListener("dragend", () => {
+          arrastrandoId = null;
+          ranuras.forEach((ranura) => ranura.classList.remove("activa"));
+        });
+      });
+    }
+
+    function escribirTecla(valor) {
+      if (codigoActual.length >= 2) {
+        codigoActual = codigoActual.slice(1) + valor;
+      } else {
+        codigoActual += valor;
+      }
+
+      actualizarPantalla(`Codigo actual: ${codigoActual}`);
+      renderProductos();
+    }
+
+    function limpiarCodigo() {
+      codigoActual = "";
+      actualizarPantalla("Codigo borrado.");
+      renderProductos();
+    }
+
+    function renderSalidaItems(items, contenedor, claseSalida, vacioTexto) {
+      if (!items.length) {
+        contenedor.className = "bandeja-vacia";
+        contenedor.textContent = vacioTexto;
+        return;
+      }
+
+      contenedor.className = `salida-grid ${claseSalida}`;
+      contenedor.innerHTML = items.map((item) => `
+        <div class="salida-item">
+          <img class="salida-item-img" src="${item.imagen}" alt="${item.nombre}">
+          <span class="salida-cantidad">x${item.cantidad}</span>
+        </div>
+      `).join("");
+    }
+
+    function renderEntregas() {
+      renderSalidaItems(ultimaEntrega.monedas, salidaMonedasEl, "salida-monedas", "Sin monedas");
+      renderSalidaItems(ultimaEntrega.billetes, salidaBilletesEl, "salida-billetes", "Sin billetes");
+      renderSalidaItems(ultimaEntrega.productos, salidaProductosEl, "salida-productos", "Esperando compra");
+    }
+
+    function limpiarEntregas() {
+      ultimaEntrega = {
+        monedas: [],
+        billetes: [],
+        productos: []
+      };
+      renderEntregas();
+    }
+
+    function descomponerVuelto(monto) {
+      let restante = Math.round(monto * 100);
+      const billetes = [];
+      const monedas = [];
+
+      const denominaciones = [
+        { tipo: "billete", valorCentimos: 20000, nombre: "200 soles", imagen: "img/billetes/200_soles.jpg" },
+        { tipo: "billete", valorCentimos: 10000, nombre: "100 soles", imagen: "img/billetes/100_soles.jpg" },
+        { tipo: "billete", valorCentimos: 5000, nombre: "50 soles", imagen: "img/billetes/50_soles.jpg" },
+        { tipo: "billete", valorCentimos: 2000, nombre: "20 soles", imagen: "img/billetes/20_soles.jpg" },
+        { tipo: "billete", valorCentimos: 1000, nombre: "10 soles", imagen: "img/billetes/10_soles.jpg" },
+        { tipo: "moneda", valorCentimos: 500, nombre: "5 soles", imagen: "img/monedas/5_soles.png" },
+        { tipo: "moneda", valorCentimos: 200, nombre: "2 soles", imagen: "img/monedas/2_soles.png" },
+        { tipo: "moneda", valorCentimos: 100, nombre: "1 sol", imagen: "img/monedas/1_sol.png" },
+        { tipo: "moneda", valorCentimos: 50, nombre: "50 centimos", imagen: "img/monedas/50_centimos.png" },
+        { tipo: "moneda", valorCentimos: 20, nombre: "20 centimos", imagen: "img/monedas/20_centimos.png" },
+        { tipo: "moneda", valorCentimos: 10, nombre: "10 centimos", imagen: "img/monedas/10_centimos.png" }
+      ];
+
+      for (const d of denominaciones) {
+        const cantidad = Math.floor(restante / d.valorCentimos);
+        if (cantidad > 0) {
+          const item = { nombre: d.nombre, imagen: d.imagen, cantidad };
+          if (d.tipo === "billete") {
+            billetes.push(item);
+          } else {
+            monedas.push(item);
+          }
+          restante -= cantidad * d.valorCentimos;
+        }
+      }
+
+      return { billetes, monedas };
+    }
+
+    function animarCaidaProducto(codigoProducto, imagenProducto) {
+      const codigos = [...productosEl.querySelectorAll(".producto")];
+      const productoCard = codigos.find((item) => {
+        const codigoEl = item.querySelector(".codigo");
+        return codigoEl && codigoEl.textContent.trim() === codigoProducto;
+      });
+
+      if (!productoCard) {
+        return Promise.resolve();
+      }
+
+      const imagenOrigen = productoCard.querySelector(".producto-imagen");
+      if (!imagenOrigen) {
+        return Promise.resolve();
+      }
+
+      const salidaRect = salidaProductosEl.getBoundingClientRect();
+      const origenRect = imagenOrigen.getBoundingClientRect();
+      const clon = document.createElement("img");
+      clon.className = "producto-cayendo";
+      clon.src = imagenProducto;
+      clon.alt = "";
+      clon.style.left = `${origenRect.left + (origenRect.width / 2) - 42}px`;
+      clon.style.top = `${origenRect.top}px`;
+      document.body.appendChild(clon);
+
+      const destinoX = salidaRect.left + Math.min(80, salidaRect.width / 2);
+      const destinoY = salidaRect.top + 16;
+      const inicioX = origenRect.left + (origenRect.width / 2) - 42;
+      const inicioY = origenRect.top;
+      const deltaX = destinoX - inicioX;
+      const deltaY = destinoY - inicioY;
+      const duracion = 950;
+      const inicio = performance.now();
+
+      return new Promise((resolve) => {
+        function paso(tiempo) {
+          const progreso = Math.min((tiempo - inicio) / duracion, 1);
+          const ease = 1 - Math.pow(1 - progreso, 3);
+          const x = inicioX + deltaX * ease;
+          const y = inicioY + deltaY * ease;
+          const rotacion = 12 * progreso;
+
+          clon.style.left = `${x}px`;
+          clon.style.top = `${y}px`;
+          clon.style.transform = `rotate(${rotacion}deg)`;
+
+          if (progreso < 1) {
+            requestAnimationFrame(paso);
+            return;
+          }
+
+          clon.remove();
+          resolve();
+        }
+
+        requestAnimationFrame(paso);
+      });
+    }
+
+    function insertarDesdeBolsillo(id, tipoRanura) {
+      const item = bolsillo.find((dato) => dato.id === id);
+      if (!item) return;
+
+      if (item.cantidad <= 0) {
+        actualizarPantalla(`No tienes ${item.nombre} disponible.`);
+        return;
+      }
+
+      if (item.tipo !== tipoRanura) {
+        actualizarPantalla(`Ese ${item.tipo} no entra por la ranura de ${tipoRanura}.`);
+        return;
+      }
+
+      item.cantidad -= 1;
+      saldoMaquina += item.valor;
+      limpiarEntregas();
+      actualizarPantalla(`La maquina recibio ${item.nombre}.`);
+      renderBolsillo();
+    }
+
+    function devolverSaldo() {
+      if (saldoMaquina <= 0) {
+        return 0;
+      }
+
+      const vuelto = saldoMaquina;
+      saldoMaquina = 0;
+      return vuelto;
+    }
+
+    async function comprar() {
+      if (codigoActual.length !== 2) {
+        actualizarPantalla("El producto se selecciona con dos digitos.");
+        return;
+      }
+
+      const producto = productos.find((item) => item.codigo === codigoActual);
+      if (!producto) {
+        actualizarPantalla("Codigo no valido.");
+        limpiarEntregas();
+        return;
+      }
+
+      if (producto.stock <= 0) {
+        actualizarPantalla(`${producto.nombre} agotado.`);
+        limpiarEntregas();
+        return;
+      }
+
+      if (saldoMaquina < producto.precio) {
+        const falta = producto.precio - saldoMaquina;
+        actualizarPantalla(`Saldo insuficiente. Faltan ${dinero(falta)}.`);
+        limpiarEntregas();
+        return;
+      }
+
+      producto.stock -= 1;
+      const vuelto = saldoMaquina - producto.precio;
+      saldoMaquina = 0;
+      const vueltoDescompuesto = descomponerVuelto(vuelto);
+      actualizarPantalla(`Compra exitosa: ${producto.nombre}. Vuelto ${dinero(vuelto)}.`);
+      renderProductos();
+      await animarCaidaProducto(producto.codigo, producto.imagen);
+      ultimaEntrega = {
+        monedas: vueltoDescompuesto.monedas,
+        billetes: vueltoDescompuesto.billetes,
+        productos: [
+          { nombre: producto.nombre, imagen: producto.imagen, cantidad: 1 }
+        ]
+      };
+      renderEntregas();
+      codigoActual = "";
+      codigoActualEl.textContent = "--";
+    }
+
+    function configurarRanuras() {
+      for (const ranura of ranuras) {
+        ranura.addEventListener("dragover", (event) => {
+          event.preventDefault();
+          ranura.classList.add("activa");
+        });
+
+        ranura.addEventListener("dragleave", () => {
+          ranura.classList.remove("activa");
+        });
+
+        ranura.addEventListener("drop", (event) => {
+          event.preventDefault();
+          ranura.classList.remove("activa");
+          const id = event.dataTransfer.getData("text/plain") || arrastrandoId;
+          insertarDesdeBolsillo(id, ranura.dataset.tipo);
+          arrastrandoId = null;
+        });
+      }
+    }
+
+    document.querySelectorAll("[data-tecla]").forEach((boton) => {
+      boton.addEventListener("click", () => escribirTecla(boton.dataset.tecla));
+    });
+
+    document.getElementById("borrar").addEventListener("click", limpiarCodigo);
+    document.getElementById("comprar").addEventListener("click", comprar);
+
+    actualizarPantalla("Bienvenido. Arrastra una moneda o billete desde tu bolsillo.");
+    renderProductos();
+    renderBolsillo();
+    renderEntregas();
+    configurarRanuras();
+  </script>
+</body>
+</html>
