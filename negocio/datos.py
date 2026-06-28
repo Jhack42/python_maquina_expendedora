@@ -33,7 +33,7 @@ casilleros = {
     "5": {"producto_id": 5, "stock": 6},
     "6": {"producto_id": 6, "stock": 5},
     "7": {"producto_id": 7, "stock": 7},
-    "8": {"producto_id": 8, "stock": 5}
+    "9": {"producto_id": 8, "stock": 5}
 }
 
 dinero_categoria = {

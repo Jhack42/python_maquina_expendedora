@@ -98,11 +98,6 @@
       font-size: clamp(1.8rem, 4vw, 2.8rem);
     }
 
-    .subtitulo {
-      color: #334155;
-      margin-bottom: 20px;
-    }
-
     .productos {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -227,13 +222,6 @@
       color: var(--ink);
       font-size: 1.25rem;
       font-weight: 800;
-    }
-
-    .detalle {
-      position: relative;
-      z-index: 3;
-      color: #475569;
-      font-size: 0.94rem;
     }
 
     .pie-producto {
@@ -851,27 +839,26 @@
     <main class="maquina">
       <section class="vitrina">
         <h1 class="titulo">Maquina Expendedora</h1>
-        <p class="subtitulo">Los productos estan detras del vidrio. Escribe un codigo de dos digitos, inserta tu dinero y compra.</p>
         <div class="productos" id="productos"></div>
       </section>
 
       <section class="salida-productos-wrap">
         <h2>SALIDA DE PRODUCTOS</h2>
         <div class="bandeja salida-productos">
-          <div id="salida-productos" class="bandeja-vacia">Esperando compra</div>
+          <div id="salida-productos" class="bandeja-vacia"></div>
         </div>
       </section>
 
       <aside class="panel">
         <section class="pantalla">
           <div class="pantalla-label">PANTALLA</div>
-          <div class="mensaje" id="mensaje">Bienvenido. Arrastra una moneda o billete desde tu bolsillo.</div>
-          <div class="saldo" id="saldo-maquina">Saldo maquina: S/ 0.00</div>
+          <div class="mensaje" id="mensaje"></div>
+          <div class="saldo" id="saldo-maquina"></div>
         </section>
 
         <section class="seleccion">
           Codigo seleccionado
-          <strong id="codigo-actual">--</strong>
+          <strong id="codigo-actual"></strong>
         </section>
 
         <section class="ranuras">
@@ -917,15 +904,15 @@
           <div class="entregas">
             <div class="bandeja salida-monedas">
               <div class="bandeja-titulo">SALIDA DE MONEDAS</div>
-              <div id="salida-monedas" class="bandeja-vacia">Sin monedas</div>
+              <div id="salida-monedas" class="bandeja-vacia"></div>
             </div>
             <div class="bandeja salida-billetes">
               <div class="bandeja-titulo">SALIDA DE BILLETES</div>
-              <div id="salida-billetes" class="bandeja-vacia">Sin billetes</div>
+              <div id="salida-billetes" class="bandeja-vacia"></div>
             </div>
             <div class="bandeja salida-productos">
               <div class="bandeja-titulo">SALIDA DE PRODUCTOS</div>
-              <div id="salida-productos" class="bandeja-vacia">Esperando compra</div>
+              <div id="salida-productos" class="bandeja-vacia"></div>
             </div>
           </div>
         </section>
@@ -937,7 +924,7 @@
 
       <section class="saldo-personal">
         <div class="pantalla-label">SALDO PERSONAL</div>
-        <div class="saldo-personal-resumen" id="saldo-personal">S/ 0.00</div>
+        <div class="saldo-personal-resumen" id="saldo-personal"></div>
       </section>
 
       <div class="bolsillo-columnas">
@@ -1397,7 +1384,6 @@
         return;
       }
 
-      const productoSalida = ultimaEntrega.productos[0];
       const imagenOrigen = salidaProductosEl.querySelector(".salida-item img");
       if (imagenOrigen) {
         await animarImagenA(imagenOrigen, itemsCanastaEl);

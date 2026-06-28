@@ -107,7 +107,7 @@ bolsillo = {
 saldo_maquina_centimos = 0
 ultima_entrega = {"monedas": [], "billetes": [], "productos": []}
 cliente_productos = []
-ultimo_mensaje = "Bienvenido. Arrastra una moneda o billete desde tu bolsillo."
+ultimo_mensaje = "Bienvenido. a"
 
 
 def mostrar_soles(cantidad_centimos):
