@@ -17,7 +17,6 @@ def _normalizar_productos():
                 "precio_centimos": int(float(producto["precio"]) * 100),
                 "stock": stock,
                 "imagen": producto.get("img", producto.get("imagen", "")),
-                "detalle": producto.get("detalle", producto["nombre"]),
             }
         )
     return productos
@@ -107,6 +106,7 @@ bolsillo = {
 }
 saldo_maquina_centimos = 0
 ultima_entrega = {"monedas": [], "billetes": [], "productos": []}
+cliente_productos = []
 ultimo_mensaje = "Bienvenido. Arrastra una moneda o billete desde tu bolsillo."
 
 
@@ -140,7 +140,6 @@ def _serializar_producto(producto):
         "precio": producto["precio_centimos"] / 100,
         "stock": producto["stock"],
         "imagen": producto["imagen"],
-        "detalle": producto["detalle"],
     }
 
 
@@ -163,6 +162,21 @@ def _serializar_entrega_item(item):
     }
 
 
+def _agregar_a_cliente_productos(item):
+    for producto_en_canasta in cliente_productos:
+        if producto_en_canasta["nombre"] == item["nombre"] and producto_en_canasta["imagen"] == item["imagen"]:
+            producto_en_canasta["cantidad"] += item.get("cantidad", 1)
+            return
+
+    cliente_productos.append(
+        {
+            "nombre": item["nombre"],
+            "imagen": item["imagen"],
+            "cantidad": item.get("cantidad", 1),
+        }
+    )
+
+
 def obtener_estado():
     return {
         "mensaje": ultimo_mensaje,
@@ -178,6 +192,7 @@ def obtener_estado():
             "billetes": [_serializar_entrega_item(item) for item in ultima_entrega["billetes"]],
             "productos": [_serializar_entrega_item(item) for item in ultima_entrega["productos"]],
         },
+        "cliente_productos": [_serializar_entrega_item(item) for item in cliente_productos],
     }
 
 
@@ -217,7 +232,7 @@ def insertar_desde_bolsillo(id_dinero, tipo_ranura):
     dinero_maquina[normalized_id]["cantidad"] += 1
     saldo_maquina_centimos += item["valor_centimos"]
     _limpiar_entregas()
-    ultimo_mensaje = f"La maquina recibio {item['nombre']}."
+    ultimo_mensaje = f"Se recibio {item['nombre']}."
     return {"ok": True, "estado": obtener_estado()}
 
 
@@ -340,4 +355,19 @@ def recoger_entrega():
     ultima_entrega["monedas"] = []
     ultima_entrega["billetes"] = []
     ultimo_mensaje = "Cambio recogido en tu bolsillo."
+    return {"ok": True, "estado": obtener_estado()}
+
+
+def recoger_producto():
+    global ultimo_mensaje
+
+    if not ultima_entrega["productos"]:
+        ultimo_mensaje = "No hay producto para guardar en la canasta."
+        return {"ok": False, "error": ultimo_mensaje, "estado": obtener_estado()}
+
+    for entrega in ultima_entrega["productos"]:
+        _agregar_a_cliente_productos(entrega)
+
+    ultima_entrega["productos"] = []
+    ultimo_mensaje = "Producto guardado en tu canasta."
     return {"ok": True, "estado": obtener_estado()}

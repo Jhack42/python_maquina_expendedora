@@ -17,13 +17,23 @@ cliente_productos = []
 productos = {
     1: {"nombre": "Agua Cielo", "precio": 2, "img": "img/productos/agua_cielo.png"},
     2: {"nombre": "Coca cola", "precio": 3, "img": "img/productos/coca_cola.png"},
-    3: {"nombre": "Sublime", "precio": 2, "img": "img/productos/chocolate_sublime.png"}
+    3: {"nombre": "Sublime", "precio": 2, "img": "img/productos/chocolate_sublime.png"},
+    4: {"nombre": "Cuates", "precio": 3.5, "img": "img/productos/cuates.png"},
+    5: {"nombre": "Galleta Soda", "precio": 2.2, "img": "img/productos/galleta_soda.png"},
+    6: {"nombre": "Inca Cola", "precio": 4.5, "img": "img/productos/inca_cola.png"},
+    7: {"nombre": "Papitas Lays", "precio": 4, "img": "img/productos/papitas_lays.png"},
+    8: {"nombre": "karamanduka", "precio": 3, "img": "img/productos/karamanduka.png"}
 }
 
 casilleros = {
     "1": {"producto_id": 1, "stock": 4},
     "2": {"producto_id": 2, "stock": 5},
-    "3": {"producto_id": 3, "stock": 5}
+    "3": {"producto_id": 3, "stock": 5},
+    "4": {"producto_id": 4, "stock": 7},
+    "5": {"producto_id": 5, "stock": 6},
+    "6": {"producto_id": 6, "stock": 5},
+    "7": {"producto_id": 7, "stock": 7},
+    "8": {"producto_id": 8, "stock": 5}
 }
 
 dinero_categoria = {

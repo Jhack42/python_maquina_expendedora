@@ -7,6 +7,7 @@ from negocio.funciones import (
     insertar_desde_bolsillo,
     obtener_estado,
     recoger_entrega,
+    recoger_producto,
 )
 
 
@@ -43,6 +44,9 @@ class ApiHandler(SimpleHTTPRequestHandler):
         if self.path == "/api/recoger":
             self.api_recoger()
             return
+        if self.path == "/api/recoger-producto":
+            self.api_recoger_producto()
+            return
         self.send_error(404)
 
     def api_estado(self):
@@ -65,4 +69,8 @@ class ApiHandler(SimpleHTTPRequestHandler):
 
     def api_recoger(self):
         respuesta = recoger_entrega()
+        self.responder(respuesta, 200 if respuesta["ok"] else 400)
+
+    def api_recoger_producto(self):
+        respuesta = recoger_producto()
         self.responder(respuesta, 200 if respuesta["ok"] else 400)
