@@ -9,6 +9,12 @@ from negocio.funciones import (
     recoger_entrega,
     recoger_producto,
 )
+from negocio.funcinones.admin import (
+    obtener_estado_admin,
+    generar_reporte_inventario,
+    generar_reporte_monedas,
+    generar_boleta_con_productos,
+)
 
 
 class ApiHandler(SimpleHTTPRequestHandler):
@@ -22,14 +28,33 @@ class ApiHandler(SimpleHTTPRequestHandler):
         self.send_response(estado)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(contenido)))
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(contenido)
 
     def do_GET(self):
+        if self.path == "/":
+            self.path = "/index.html"
+        elif self.path == "/admin":
+            self.path = "/admin.html"
+        
         if self.path == "/api/estado":
             self.api_estado()
             return
-        super().do_GET()
+        if self.path == "/api/admin/estado":
+            self.api_admin_estado()
+            return
+        if self.path == "/api/admin/descargar/inventario":
+            self.api_descargar_inventario()
+            return
+        if self.path == "/api/admin/descargar/monedas":
+            self.api_descargar_monedas()
+            return
+        
+        # Servir archivos estáticos con headers CORS
+        response = super().do_GET()
+        self.send_header("Access-Control-Allow-Origin", "*")
+        return response
 
     def do_POST(self):
         if self.path == "/api/bolsillo/cambiar":
@@ -65,6 +90,15 @@ class ApiHandler(SimpleHTTPRequestHandler):
     def api_comprar(self):
         datos = self.obtener_json()
         respuesta = comprar_producto(datos["codigo"])
+        if respuesta["ok"] and respuesta.get("producto_entregado"):
+            boleta_path = generar_boleta_con_productos([
+                {
+                    "nombre": respuesta["producto_entregado"]["nombre"],
+                    "cantidad": 1,
+                    "precio_centimos": respuesta["producto_entregado"]["precio_centimos"],
+                }
+            ], pago_centimos=respuesta.get("pago_centimos", 0), vuelto_centimos=respuesta.get("vuelto_centimos", 0))
+            respuesta["boleta"] = boleta_path
         self.responder(respuesta, 200 if respuesta["ok"] else 400)
 
     def api_recoger(self):
@@ -73,4 +107,19 @@ class ApiHandler(SimpleHTTPRequestHandler):
 
     def api_recoger_producto(self):
         respuesta = recoger_producto()
+        # Generar boleta cuando se recoge el producto
+        if respuesta["ok"] and respuesta["estado"]["cliente_productos"]:
+            boleta_path = generar_boleta_con_productos()
+            respuesta["boleta"] = boleta_path
         self.responder(respuesta, 200 if respuesta["ok"] else 400)
+
+    def api_admin_estado(self):
+        self.responder({"estado": obtener_estado_admin()})
+
+    def api_descargar_inventario(self):
+        path = generar_reporte_inventario()
+        self.responder({"path": path})
+
+    def api_descargar_monedas(self):
+        path = generar_reporte_monedas()
+        self.responder({"path": path})

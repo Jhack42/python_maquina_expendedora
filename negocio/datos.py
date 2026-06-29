@@ -26,14 +26,14 @@ productos = {
 }
 
 casilleros = {
-    "1": {"producto_id": 1, "stock": 4},
-    "2": {"producto_id": 2, "stock": 5},
-    "3": {"producto_id": 3, "stock": 5},
-    "4": {"producto_id": 4, "stock": 7},
-    "5": {"producto_id": 5, "stock": 6},
-    "6": {"producto_id": 6, "stock": 5},
-    "7": {"producto_id": 7, "stock": 7},
-    "9": {"producto_id": 8, "stock": 5}
+    "1": {"producto_id": 1, "stock": 4, "orden": 1},
+    "23": {"producto_id": 2, "stock": 5, "orden": 2},
+    "3": {"producto_id": 3, "stock": 5, "orden": 3},
+    "4": {"producto_id": 4, "stock": 7, "orden": 4},
+    "34": {"producto_id": 5, "stock": 6, "orden": 5},
+    "6": {"producto_id": 6, "stock": 5, "orden": 6},
+    "7": {"producto_id": 7, "stock": 7, "orden": 7},
+    "9": {"producto_id": 8, "stock": 5, "orden": 9}
 }
 
 dinero_categoria = {

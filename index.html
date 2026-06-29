@@ -832,9 +832,50 @@
         justify-content: center;
       }
     }
+
+    .admin-button {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: none;
+      transition: all 0.3s ease;
+      padding: 0;
+      overflow: visible;
+    }
+
+    .admin-button img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+      transition: all 0.3s ease;
+    }
+
+    .admin-button:hover img {
+      filter: drop-shadow(0 8px 16px rgba(234, 88, 12, 0.6));
+      transform: scale(1.1);
+    }
+
+    .admin-button:active img {
+      transform: scale(0.95);
+    }
+
   </style>
 </head>
 <body>
+  <a href="/admin" class="admin-button" title="Panel de Administración">
+    <img src="img/logo/logo_admin.png" alt="Admin">
+  </a>
   <div class="layout">
     <main class="maquina">
       <section class="vitrina">
@@ -910,10 +951,6 @@
               <div class="bandeja-titulo">SALIDA DE BILLETES</div>
               <div id="salida-billetes" class="bandeja-vacia"></div>
             </div>
-            <div class="bandeja salida-productos">
-              <div class="bandeja-titulo">SALIDA DE PRODUCTOS</div>
-              <div id="salida-productos" class="bandeja-vacia"></div>
-            </div>
           </div>
         </section>
       </aside>
@@ -945,7 +982,46 @@
     </aside>
   </div>
 
+
   <script>
+    const API_BASE = window.location.origin;
+
+    async function cargarPopapBoleta() {
+      try {
+        const response = await fetch("popap_boleta.html");
+        if (!response.ok) {
+          throw new Error(`No se pudo cargar popap_boleta.html: ${response.status}`);
+        }
+
+        const html = await response.text();
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = html;
+
+        const scripts = Array.from(wrapper.querySelectorAll("script"));
+        const nodes = Array.from(wrapper.childNodes).filter((node) => node.nodeName !== "SCRIPT");
+
+        document.body.append(...nodes);
+
+        for (const script of scripts) {
+          const nuevo = document.createElement("script");
+          if (script.type) {
+            nuevo.type = script.type;
+          }
+          if (script.src) {
+            nuevo.src = script.src;
+          } else {
+            nuevo.textContent = script.textContent;
+          }
+          document.body.appendChild(nuevo);
+        }
+
+        if (window.PopapBoleta?.init) {
+          window.PopapBoleta.init(API_BASE);
+        }
+      } catch (error) {
+        console.error("Error cargando componente de boleta:", error);
+      }
+    }
     const productosEl = document.getElementById("productos");
     const itemsMonedasEl = document.getElementById("items-monedas");
     const itemsBilletesEl = document.getElementById("items-billetes");
@@ -1285,10 +1361,19 @@
           codigoActual = "";
           codigoActualEl.textContent = "--";
         }
+
+        if (datos.boleta) {
+          if (window.PopapBoleta?.mostrarBoletaPopup) {
+            await window.PopapBoleta.mostrarBoletaPopup(datos.boleta, { autoDownload: true });
+          } else {
+            console.warn("PopapBoleta no está cargado");
+          }
+        }
       } catch (error) {
         actualizarPantalla(`Error en compra: ${error.message}`);
       }
     }
+
 
     async function animarEntregaABolsillo() {
       const animaciones = [];
@@ -1307,6 +1392,15 @@
       });
 
       await Promise.all(animaciones);
+    }
+
+    function descargarArchivo(path) {
+      const enlace = document.createElement('a');
+      enlace.href = `${API_BASE}${path}`;
+      enlace.download = path.split('/').pop();
+      document.body.appendChild(enlace);
+      enlace.click();
+      document.body.removeChild(enlace);
     }
 
     function animarImagenA(origenImagen, destinoContenedor) {
@@ -1453,6 +1547,7 @@
     document.getElementById("recoger-entrega").addEventListener("click", recogerEntrega);
 
     configurarRanuras();
+    cargarPopapBoleta();
     pedirApi("/api/estado");
   </script>
 </body>

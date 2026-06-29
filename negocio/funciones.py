@@ -1,21 +1,31 @@
+from datetime import datetime
+from pathlib import Path
+
 from negocio import datos as datos_base
+
+BASE_DIR = Path(__file__).resolve().parents[1]
+REPORTES_DIR = BASE_DIR / "reportes"
 
 
 def _normalizar_productos():
     productos = []
-    for producto_id, producto in datos_base.productos.items():
-        stock = 0
-        for casillero in datos_base.casilleros.values():
-            if casillero.get("producto_id") == producto_id:
-                stock = casillero.get("stock", 0)
-                break
+    casilleros_ordenados = sorted(
+        datos_base.casilleros.items(),
+        key=lambda item: item[1].get("orden", 0),
+    )
+
+    for codigo_casillero, casillero in casilleros_ordenados:
+        producto_id = casillero.get("producto_id")
+        producto = datos_base.productos.get(producto_id)
+        if producto is None:
+            continue
 
         productos.append(
             {
-                "codigo": f"{producto_id:02d}",
+                "codigo": f"{int(codigo_casillero):02d}",
                 "nombre": producto["nombre"],
                 "precio_centimos": int(float(producto["precio"]) * 100),
-                "stock": stock,
+                "stock": casillero.get("stock", 0),
                 "imagen": producto.get("img", producto.get("imagen", "")),
             }
         )
@@ -50,6 +60,14 @@ def _normalizar_dinero():
             }
         )
     return items
+
+
+def _crear_directorio_reportes():
+    REPORTES_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _formatear_fecha():
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 productos = _normalizar_productos()
@@ -107,7 +125,7 @@ bolsillo = {
 saldo_maquina_centimos = 0
 ultima_entrega = {"monedas": [], "billetes": [], "productos": []}
 cliente_productos = []
-ultimo_mensaje = "Bienvenido. a"
+ultimo_mensaje = "Bienvenido."
 
 
 def mostrar_soles(cantidad_centimos):
@@ -187,6 +205,7 @@ def obtener_estado():
         ) / 100,
         "productos": [_serializar_producto(producto) for producto in productos],
         "bolsillo": [_serializar_bolsillo(item) for item in bolsillo.values()],
+        "dinero_maquina": [_serializar_bolsillo(item) for item in dinero_maquina.values()],
         "ultima_entrega": {
             "monedas": [_serializar_entrega_item(item) for item in ultima_entrega["monedas"]],
             "billetes": [_serializar_entrega_item(item) for item in ultima_entrega["billetes"]],
@@ -301,7 +320,8 @@ def comprar_producto(codigo):
         ultimo_mensaje = f"Saldo insuficiente. Faltan {mostrar_soles(falta)}."
         return {"ok": False, "error": ultimo_mensaje, "estado": obtener_estado()}
 
-    vuelto_centimos = saldo_maquina_centimos - producto["precio_centimos"]
+    pago_centimos = saldo_maquina_centimos
+    vuelto_centimos = pago_centimos - producto["precio_centimos"]
     vuelto_entregado = calcular_vuelto(vuelto_centimos)
     if vuelto_entregado is None:
         ultimo_mensaje = "La maquina no tiene dinero suficiente para dar vuelto."
@@ -333,7 +353,11 @@ def comprar_producto(codigo):
         "producto_entregado": {
             "codigo": producto["codigo"],
             "imagen": producto["imagen"],
+            "nombre": producto["nombre"],
+            "precio_centimos": producto["precio_centimos"],
         },
+        "pago_centimos": pago_centimos,
+        "vuelto_centimos": vuelto_centimos,
         "estado": obtener_estado(),
     }
     return response

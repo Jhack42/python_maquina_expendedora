@@ -1,0 +1,32 @@
+============================================================
+                BOLETA DE VENTA ELECTRÓNICA                 
+============================================================
+
+RUC: 12345678901
+Razón Social: MÁQUINA EXPENDEDORA DE PRODUCTOS S.A.C.
+Dirección: Centro Operativo
+Teléfono: (01) 1234567
+Fecha: 2026-06-28 18:49:28
+Boleta Nº: 20260628184928
+
+------------------------------------------------------------
+CLIENTE: NO IDENTIFICADO                            DNI/RUC: NO IDENTIFICADO
+------------------------------------------------------------
+
+ITEM  DESCRIPCIÓN                 CANT        PRECIO
+------------------------------------------------------------
+1     Cuates                      1     S/    3.50
+------------------------------------------------------------
+SUBTOTAL:                                          S/     3.50
+IGV (18%):                                         S/     0.63
+============================================================
+TOTAL A PAGAR:                                     S/     4.13
+PAGÓ:                                              S/   200.00
+VUELTO:                                            S/   196.50
+============================================================
+
+GRACIAS POR SU COMPRA
+Por favor, guarde su boleta para futuras consultas
+Vuelva pronto - ¡Que disfrute sus productos!
+
+============================================================

@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Administración - Máquina Expendedora</title>
+  <style>
+    :root {
+      --primary: #0f172a;
+      --primary-light: #1e293b;
+      --accent: #ea580c;
+      --accent-dark: #c2410c;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --text: #f8fafc;
+      --text-muted: #cbd5e1;
+      --border: #334155;
+      --bg-card: #1f2937;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: var(--text);
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    h1 {
+      font-size: 2rem;
+      color: var(--accent);
+    }
+
+    .nav-buttons a {
+      display: inline-block;
+      padding: 10px 20px;
+      margin-left: 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    .nav-buttons a:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 12px rgba(234, 88, 12, 0.2);
+    }
+
+    .card h2 {
+      font-size: 1.3rem;
+      margin-bottom: 15px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-icon {
+      font-size: 1.5rem;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--success);
+      margin: 10px 0;
+    }
+
+    .stat-label {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .section {
+      margin-bottom: 30px;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      color: var(--accent);
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .two-column {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+
+    @media (max-width: 1200px) {
+      .two-column {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Chart Styles */
+    .chart-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .chart-title {
+      font-size: 1.3rem;
+      color: var(--accent);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .bars-container {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      gap: 20px;
+      min-height: 400px;
+      margin-bottom: 30px;
+    }
+
+    .bar-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      max-width: 100px;
+      position: relative;
+    }
+
+    .stock-out-overlay {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50px;
+      height: 50px;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .bar-wrapper {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .bar-value {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: var(--accent);
+      text-align: center;
+    }
+
+    .bar {
+      width: 60px;
+      background: linear-gradient(180deg, var(--accent), var(--accent-dark));
+      border-radius: 6px 6px 0 0;
+      position: relative;
+      min-height: 20px;
+      box-shadow: 0 4px 8px rgba(234, 88, 12, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .bar:hover {
+      box-shadow: 0 8px 16px rgba(234, 88, 12, 0.5);
+      transform: scaleY(1.05);
+    }
+
+    .bar-total {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-align: center;
+      min-height: 20px;
+      margin-bottom: 10px;
+    }
+
+    .bar-image {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      padding: 5px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+    }
+
+    .bar-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-align: center;
+      word-break: break-word;
+      line-height: 1.2;
+    }
+
+    .chart-summary {
+      display: flex;
+      justify-content: space-around;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      margin-top: 20px;
+    }
+
+    .summary-item {
+      text-align: center;
+    }
+
+    .summary-label {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+
+    .summary-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--success);
+    }
+
+    /* Inventory Styles */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg-card);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--primary-light);
+      color: var(--accent);
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid var(--border);
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tr:hover {
+      background: rgba(234, 88, 12, 0.1);
+    }
+
+    .product-image {
+      width: 50px;
+      height: 50px;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(234, 88, 12, 0.3);
+    }
+
+    .loading {
+      display: inline-block;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--danger);
+      color: #fca5a5;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+    }
+
+    .stock-low {
+      color: var(--warning);
+    }
+
+    .stock-out {
+      color: var(--danger);
+    }
+
+    @media (max-width: 768px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      .nav-buttons {
+        margin-top: 10px;
+      }
+
+      .nav-buttons a {
+        margin-left: 0;
+        margin-right: 5px;
+        font-size: 0.85rem;
+        padding: 8px 12px;
+      }
+
+      .bars-container {
+        min-height: 350px;
+        gap: 10px;
+      }
+
+      .bar-item {
+        max-width: 80px;
+      }
+
+      .bar-image {
+        width: 60px;
+        height: 60px;
+      }
+
+      .chart-container {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Panel de Administración</h1>
+      <div class="nav-buttons">
+        <a href="index.html">← Volver a la Máquina</a>
+      </div>
+    </header>
+
+    <!-- Info Cards -->
+    <div class="dashboard">
+      <div class="card">
+        <h2>Dinero Total</h2>
+        <div class="stat-value" id="dineroTotal">Cargando...</div>
+        <div class="stat-label">En la máquina</div>
+      </div>
+
+      <div class="card">
+        <h2>Productos</h2>
+        <div class="stat-value" id="productosCount">-</div>
+        <div class="stat-label">Productos en máquina</div>
+      </div>
+    </div>
+
+    <!-- Two Column Section: Charts + Inventory -->
+    <div class="two-column">
+      <!-- Charts Section -->
+      <div class="section">
+        <!-- Monedas Chart -->
+        <div class="chart-container">
+          <div class="chart-title">Monedas en la máquina</div>
+          <div class="bars-container" id="monedasChart">
+            <div class="loading">Cargando monedas...</div>
+          </div>
+          <div class="chart-summary">
+            <div class="summary-item">
+              <div class="summary-label">Total Monedas</div>
+              <div class="summary-value" id="monedasTotalCount">0</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Valor Total</div>
+              <div class="summary-value" id="monedasTotalValue">S/ 0.00</div>
+            </div>
+          </div>
+          <div class="button-group">
+            <button class="btn-primary" onclick="descargarMonedas()">Descargar reporte</button>
+          </div>
+        </div>
+
+        <!-- Billetes Chart -->
+        <div class="chart-container" style="margin-top: 30px;">
+          <div class="chart-title">Billetes en la máquina</div>
+          <div class="bars-container" id="billetesChart">
+            <div class="loading">Cargando billetes...</div>
+          </div>
+          <div class="chart-summary">
+            <div class="summary-item">
+              <div class="summary-label">Total Billetes</div>
+              <div class="summary-value" id="billetesTotalCount">0</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Valor Total</div>
+              <div class="summary-value" id="billetesTotalValue">S/ 0.00</div>
+            </div>
+          </div>
+          <div class="button-group">
+            <button class="btn-primary" onclick="descargarMonedas()">Descargar reporte</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inventory Section -->
+      <div class="section">
+        <h2 class="section-title">Inventario de Productos</h2>
+        <div class="chart-container">
+          <div class="chart-title">Inventario de productos</div>
+          <div class="bars-container" id="productosChart">
+            <div class="loading">Cargando inventario...</div>
+          </div>
+          <div class="chart-summary">
+            <div class="summary-item">
+              <div class="summary-label">Total productos</div>
+              <div class="summary-value" id="productosTotalCount">0</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Sin stock</div>
+              <div class="summary-value" id="productosOutOfStockCount">0</div>
+            </div>
+          </div>
+          <div class="button-group">
+            <button class="btn-primary" onclick="descargarInventario()">Descargar inventario</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://127.0.0.1:5501';
+
+    async function cargarEstadoAdmin() {
+      try {
+        const response = await fetch(`${API_BASE}/api/admin/estado`);
+        const data = await response.json();
+        const estado = data.estado;
+
+        // Actualizar valores totales
+        document.getElementById('dineroTotal').textContent = estado.dinero_total_texto;
+        document.getElementById('productosCount').textContent = estado.total_productos;
+
+        // Renderizar gráficos
+        renderizarGraficoMonedas(estado.monedas);
+        renderizarGraficoBilletes(estado.billetes);
+        renderizarGraficoProductos(estado.productos);
+
+      } catch (error) {
+        console.error('Error al cargar estado admin:', error);
+        mostrarError('Error al cargar el estado del admin');
+      }
+    }
+
+    function calcularAlturaBar(cantidad, maximo) {
+      return Math.max((cantidad / maximo) * 300, 20);
+    }
+
+    function renderizarGraficoMonedas(monedas) {
+      const container = document.getElementById('monedasChart');
+      
+      if (!monedas || monedas.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted);">Sin monedas registradas</p>';
+        document.getElementById('monedasTotalCount').textContent = '0';
+        document.getElementById('monedasTotalValue').textContent = 'S/ 0.00';
+        return;
+      }
+
+      const maxCantidad = Math.max(...monedas.map(m => m.cantidad), 1);
+      let totalMonedas = 0;
+      let totalValor = 0;
+
+      let html = '';
+      monedas.forEach(moneda => {
+        const altura = calcularAlturaBar(moneda.cantidad, maxCantidad);
+        totalMonedas += moneda.cantidad;
+        totalValor += moneda.total;
+
+        html += `
+          <div class="bar-item">
+            <div class="bar-wrapper">
+              <div class="bar-value">${moneda.cantidad}</div>
+              <div class="bar" style="height: ${altura}px;"></div>
+              <div class="bar-total">S/ ${moneda.total.toFixed(2)}</div>
+            </div>
+            <img src="${moneda.imagen}" alt="${moneda.nombre}" class="bar-image" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22%3E%3Crect fill=%22%23333%22 width=%2280%22 height=%2280%22/%3E%3C/svg%3E'">
+            <div class="bar-label">${moneda.nombre}</div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      document.getElementById('monedasTotalCount').textContent = totalMonedas;
+      document.getElementById('monedasTotalValue').textContent = `S/ ${totalValor.toFixed(2)}`;
+    }
+
+    function renderizarGraficoBilletes(billetes) {
+      const container = document.getElementById('billetesChart');
+      
+      if (!billetes || billetes.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted);">Sin billetes registrados</p>';
+        document.getElementById('billetesTotalCount').textContent = '0';
+        document.getElementById('billetesTotalValue').textContent = 'S/ 0.00';
+        return;
+      }
+
+      const maxCantidad = Math.max(...billetes.map(b => b.cantidad), 1);
+      let totalBilletes = 0;
+      let totalValor = 0;
+
+      let html = '';
+      billetes.forEach(billete => {
+        const altura = calcularAlturaBar(billete.cantidad, maxCantidad);
+        totalBilletes += billete.cantidad;
+        totalValor += billete.total;
+
+        html += `
+          <div class="bar-item">
+            <div class="bar-wrapper">
+              <div class="bar-value">${billete.cantidad}</div>
+              <div class="bar" style="height: ${altura}px;"></div>
+              <div class="bar-total">S/ ${billete.total.toFixed(2)}</div>
+            </div>
+            <img src="${billete.imagen}" alt="${billete.nombre}" class="bar-image" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22%3E%3Crect fill=%22%23333%22 width=%2280%22 height=%2280%22/%3E%3C/svg%3E'">
+            <div class="bar-label">${billete.nombre}</div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      document.getElementById('billetesTotalCount').textContent = totalBilletes;
+      document.getElementById('billetesTotalValue').textContent = `S/ ${totalValor.toFixed(2)}`;
+    }
+
+    function renderizarGraficoProductos(productos) {
+      const container = document.getElementById('productosChart');
+
+      if (!productos || productos.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted);">Sin productos registrados</p>';
+        document.getElementById('productosTotalCount').textContent = '0';
+        document.getElementById('productosOutOfStockCount').textContent = '0';
+        return;
+      }
+
+      const maxStock = Math.max(...productos.map(p => p.stock), 1);
+      let totalProductos = 0;
+      let sinStock = 0;
+      let html = '';
+
+      productos.forEach(producto => {
+        totalProductos += producto.stock;
+        if (producto.stock === 0) {
+          sinStock += 1;
+        }
+
+        const altura = Math.max((producto.stock / maxStock) * 300, 20);
+        const overlay = producto.stock === 0 ? `
+          <div class="stock-out-overlay">
+            <img src="img/nostock.png" alt="Sin stock" />
+          </div>
+        ` : '';
+
+        html += `
+          <div class="bar-item">
+            ${overlay}
+            <div class="bar-wrapper">
+              <div class="bar-value">${producto.stock}</div>
+              <div class="bar" style="height: ${altura}px;"></div>
+              <div class="bar-total">S/ ${(producto.precio * producto.stock).toFixed(2)}</div>
+            </div>
+            <img src="${producto.imagen}" alt="${producto.nombre}" class="bar-image" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22%3E%3Crect fill=%22%23333%22 width=%2280%22 height=%2280%22/%3E%3C/svg%3E'">
+            <div class="bar-label">${producto.nombre}</div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      document.getElementById('productosTotalCount').textContent = totalProductos;
+      document.getElementById('productosOutOfStockCount').textContent = sinStock;
+    }
+
+    async function descargarInventario() {
+      try {
+        const response = await fetch(`${API_BASE}/api/admin/descargar/inventario`);
+        const data = await response.json();
+        descargarArchivo(data.path);
+      } catch (error) {
+        console.error('Error al descargar inventario:', error);
+        mostrarError('Error al descargar el inventario');
+      }
+    }
+
+    async function descargarMonedas() {
+      try {
+        const response = await fetch(`${API_BASE}/api/admin/descargar/monedas`);
+        const data = await response.json();
+        descargarArchivo(data.path);
+      } catch (error) {
+        console.error('Error al descargar monedas:', error);
+        mostrarError('Error al descargar el reporte de monedas');
+      }
+    }
+
+    function descargarArchivo(path) {
+      const enlace = document.createElement('a');
+      enlace.href = `${API_BASE}${path}`;
+      enlace.download = path.split('/').pop();
+      document.body.appendChild(enlace);
+      enlace.click();
+      document.body.removeChild(enlace);
+    }
+
+    function mostrarError(mensaje) {
+      console.error(mensaje);
+      alert(mensaje);
+    }
+
+    // Cargar estado al iniciar
+    cargarEstadoAdmin();
+
+    // Recargar cada 5 segundos
+    setInterval(cargarEstadoAdmin, 5000);
+  </script>
+</body>
+</html>
